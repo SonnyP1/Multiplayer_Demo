@@ -1,5 +1,37 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &102366372958330056
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7871084825255442370}
+  m_Layer: 0
+  m_Name: SpringArm
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7871084825255442370
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 102366372958330056}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.172, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8559593083496426036}
+  m_Father: {fileID: 5404284836240670716}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3229811526359841317
 GameObject:
   m_ObjectHideFlags: 0
@@ -27,12 +59,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3229811526359841317}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.105559096, y: 1.72, z: -1.84}
+  m_LocalPosition: {x: -0.105559096, y: 0.548, z: -1.84}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 5404284836240670716}
-  m_RootOrder: 1
+  m_Father: {fileID: 7871084825255442370}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &3681871238179165430
 Camera:
@@ -220,10 +252,8 @@ GameObject:
   - component: {fileID: 5404284836240670716}
   - component: {fileID: -8241851385037966649}
   - component: {fileID: 3679419098890502761}
-  - component: {fileID: 3089766959281236943}
   - component: {fileID: 2050519390438086393}
-  - component: {fileID: 4064891221292196391}
-  - component: {fileID: 7468505294526218668}
+  - component: {fileID: 5584078421441393752}
   - component: {fileID: 2422786329858399224}
   - component: {fileID: 3935938541866010126}
   m_Layer: 0
@@ -246,7 +276,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1972361871927729572}
-  - {fileID: 8559593083496426036}
+  - {fileID: 7871084825255442370}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -280,18 +310,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MoveSpeed: 5
   PlayerEye: {fileID: 3681871238179165430}
---- !u!114 &3089766959281236943
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4319989720169762369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  SpringArm: {fileID: 102366372958330056}
 --- !u!114 &2050519390438086393
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -319,24 +338,8 @@ MonoBehaviour:
   InLocalSpace: 0
   Interpolate: 1
   CanCommitToTransform: 0
---- !u!54 &4064891221292196391
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4319989720169762369}
-  serializedVersion: 2
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 80
-  m_CollisionDetection: 0
---- !u!136 &7468505294526218668
-CapsuleCollider:
+--- !u!143 &5584078421441393752
+CharacterController:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -345,10 +348,14 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  m_Radius: 0.3
+  serializedVersion: 2
   m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.93, z: 0}
+  m_Radius: 0.24
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.88, z: 0}
 --- !u!95 &2422786329858399224
 Animator:
   serializedVersion: 4
