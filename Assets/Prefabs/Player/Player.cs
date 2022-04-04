@@ -9,13 +9,12 @@ public class Player : NetworkBehaviour
     [SerializeField] float MoveSpeed = 5f;
     [SerializeField] Camera PlayerEye;
     [SerializeField] GameObject SpringArm;
+    [SerializeField] float rotationSmoothTime = 0.01f;
+
+
+
     private CharacterController _characterController;
-
-
-    private float RotationSmoothTime = 0.12f;
-    private float _rotationVelocity;
-    private float _targetRotation = 0.0f;
-    private float _verticalVelocity;
+    private float turnSmoothVelocity;
     PlayerInput playInput;
     Animator animator;
     Vector2 mouseInput;
@@ -23,6 +22,7 @@ public class Player : NetworkBehaviour
     float cameraPitch;
 
     private NetworkVariable<Vector2> netMoveInput = new NetworkVariable<Vector2>();
+    private NetworkVariable<Vector2> netMouseInput = new NetworkVariable<Vector2>();
     private void Awake()
     {
         if(playInput == null)
@@ -69,7 +69,7 @@ public class Player : NetworkBehaviour
 
     private void OnMouseMove(UnityEngine.InputSystem.InputAction.CallbackContext obj)
     {
-        mouseInput = obj.ReadValue<Vector2>();
+        OnMouseUpdatedServerRPC(obj.ReadValue<Vector2>());
     }
 
     private void Move(UnityEngine.InputSystem.InputAction.CallbackContext obj)
@@ -81,6 +81,12 @@ public class Player : NetworkBehaviour
     private void OnInputUpdatedServerRpc(Vector2 newInputValue)
     {
         netMoveInput.Value = newInputValue;
+    }
+
+    [ServerRpc]
+    private void OnMouseUpdatedServerRPC(Vector2 newInputValue)
+    {
+        netMouseInput.Value = newInputValue;
     }
 
     void Start()
@@ -99,26 +105,28 @@ public class Player : NetworkBehaviour
         //on the server and the client this is both called
         //however the moveinput is something on the client but ZERO on the server
         UpdateCameraRotation();
-        float currentMoveSpeed = netMoveInput.Value.magnitude * MoveSpeed;
 
+
+        float currentMoveSpeed = netMoveInput.Value.magnitude * MoveSpeed;
         if (IsServer)
         {
-            Vector3 inputDirection = new Vector3(netMoveInput.Value.x, 0.0f, netMoveInput.Value.y).normalized;
-            if (!_characterController.isGrounded)
+            Vector3 playerDir = new Vector3(netMoveInput.Value.x, 0f, netMoveInput.Value.y).normalized;
+
+            if(playerDir.magnitude >= 0.1f)
             {
-                _verticalVelocity += -9.8f * Time.deltaTime;
+                float targetAngle = Mathf.Atan2(playerDir.x, playerDir.z) * Mathf.Rad2Deg + PlayerEye.transform.eulerAngles.y;
+                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, rotationSmoothTime);
+                transform.rotation = Quaternion.Euler(0f, angle, 0f);
+
+                Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+
+                float velocityY = 0;
+                if(!_characterController.isGrounded)
+                {
+                    velocityY = -9.8f * Time.deltaTime;
+                }
+                _characterController.Move(moveDir.normalized * MoveSpeed* Time.deltaTime + new Vector3(0,velocityY,0));
             }
-
-            if(netMoveInput.Value != Vector2.zero)
-            {
-                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + SpringArm.transform.eulerAngles.y;
-                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity, RotationSmoothTime);
-
-                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-            }
-
-            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-            _characterController.Move(targetDirection.normalized * (currentMoveSpeed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
         }
 
         if (animator != null)
@@ -131,8 +139,8 @@ public class Player : NetworkBehaviour
     private void UpdateCameraRotation()
     {
         float deltaTimeMultiplier = 10 * Time.deltaTime;
-        cameraYaw += mouseInput.x * deltaTimeMultiplier;
-        cameraPitch += -mouseInput.y * deltaTimeMultiplier;
+        cameraYaw += netMouseInput.Value.x * deltaTimeMultiplier;
+        cameraPitch += -netMouseInput.Value.y * deltaTimeMultiplier;
 
         
         if (IsServer)
