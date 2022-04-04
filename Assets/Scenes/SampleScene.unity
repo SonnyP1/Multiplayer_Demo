@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 2082.1074, g: 2175.17, b: 2542.0508, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -18017,7 +18017,7 @@ MonoBehaviour:
     invertFade: 0
     distanceFadeStart: 50
     distanceFadeEnd: 60
-    textureOffset: {x: -0, y: -0, z: -0}
+    textureOffset: {x: 0, y: 0, z: 0}
     falloffMode: 0
   m_Version: 2
 --- !u!1001 &1504255721
@@ -32246,6 +32246,10 @@ PrefabInstance:
       propertyPath: StartServerButton
       value: 
       objectReference: {fileID: 1608477945}
+    - target: {fileID: 6057687798145465350, guid: 71916f1f624fcdd4693fd7a13dddad43, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -12.375
+      objectReference: {fileID: 0}
     - target: {fileID: 6057687798759231128, guid: 71916f1f624fcdd4693fd7a13dddad43, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
