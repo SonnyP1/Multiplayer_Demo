@@ -279,10 +279,10 @@ GameObject:
   m_Component:
   - component: {fileID: 5404284836240670716}
   - component: {fileID: -8241851385037966649}
-  - component: {fileID: 2050519390438086393}
-  - component: {fileID: 3935938541866010126}
   - component: {fileID: 3679419098890502761}
+  - component: {fileID: 3935938541866010126}
   - component: {fileID: 515959986114069893}
+  - component: {fileID: 2050519390438086393}
   - component: {fileID: 2608450637085731274}
   - component: {fileID: 2422786329858399224}
   - component: {fileID: 8305145087369830160}
@@ -326,6 +326,50 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
+--- !u!114 &3679419098890502761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4319989720169762369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d509c4971847124494ddce9587d39b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 5
+  playerEye: {fileID: 3681871238179165430}
+  playerSpringArm: {fileID: 7871084825255442370}
+  jumpSpeed: 10
+  rotationVelocity: 5
+  MagicProjectile: {fileID: 6893058530782232692, guid: 1580a9ab1e35c3f449bb7616a092bcf8, type: 3}
+  MagicProjectileSpawnPoint: {fileID: 8350783349404474407}
+--- !u!114 &3935938541866010126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4319989720169762369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Animator: {fileID: 2422786329858399224}
+--- !u!114 &515959986114069893
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4319989720169762369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &2050519390438086393
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -353,50 +397,6 @@ MonoBehaviour:
   InLocalSpace: 0
   Interpolate: 1
   CanCommitToTransform: 0
---- !u!114 &3935938541866010126
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4319989720169762369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Animator: {fileID: 2422786329858399224}
---- !u!114 &3679419098890502761
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4319989720169762369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d509c4971847124494ddce9587d39b6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  moveSpeed: 5
-  playerEye: {fileID: 3681871238179165430}
-  playerSpringArm: {fileID: 7871084825255442370}
-  jumpSpeed: 10
-  rotationVelocity: 1
-  MagicProjectile: {fileID: 6893058530782232692, guid: 1580a9ab1e35c3f449bb7616a092bcf8, type: 3}
-  MagicProjectileSpawnPoint: {fileID: 8350783349404474407}
---- !u!114 &515959986114069893
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4319989720169762369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!54 &2608450637085731274
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -407,11 +407,11 @@ Rigidbody:
   serializedVersion: 2
   m_Mass: 1
   m_Drag: 0
-  m_AngularDrag: 1000
+  m_AngularDrag: 100000
   m_UseGravity: 1
-  m_IsKinematic: 1
+  m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!95 &2422786329858399224
 Animator:

@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
 using System;
+using UnityEngine.Networking;
 
 public class Player : NetworkBehaviour
 {
@@ -117,20 +118,10 @@ public class Player : NetworkBehaviour
 
     private void MagicAttack(InputAction.CallbackContext obj)
     {
-        MagicAttackEndedServerRpc();
+        MagicAttackAnimationTrigger();
     }
 
-
-    [ServerRpc]
-    private void MagicAttackServerRpc()
-    {
-        if (animator != null)
-        {
-            animator.SetTrigger("Attack");
-        }
-    }
-    [ServerRpc]
-    private void MagicAttackEndedServerRpc()
+    private void MagicAttackAnimationTrigger()
     {
         if (animator != null)
         {
@@ -143,9 +134,13 @@ public class Player : NetworkBehaviour
     {
         if(MagicProjectile != null && MagicProjectileSpawnPoint != null)
         {
-            GameObject newMagicProjectile =  Instantiate(MagicProjectile,MagicProjectileSpawnPoint.position,MagicProjectileSpawnPoint.rotation);
+            GameObject newMagicProjectile = NetworkBehaviour.Instantiate(MagicProjectile, MagicProjectileSpawnPoint.position, MagicProjectileSpawnPoint.rotation);
         }
     }
+
+
+
+
     private void OnPlayerMoveStateReplicated(PlayerMoveState previousValue, PlayerMoveState newValue)
     {
         transform.position = newValue.position;
@@ -225,9 +220,9 @@ public class Player : NetworkBehaviour
     {
         transform.position += (GetControlRight() * moveStruct.move.x + GetControlForward() * moveStruct.move.y).normalized * moveStruct.deltaTime * moveSpeed;
         //look left and right
-        transform.Rotate(Vector3.up, moveStruct.look.x + rotationVelocity * moveStruct.deltaTime);
+        transform.Rotate(Vector3.up, moveStruct.look.x* rotationVelocity  * moveStruct.deltaTime);
         //look up and down
-        playerSpringArm.transform.rotation *= Quaternion.Euler(-moveStruct.look.y * rotationVelocity, 0f, 0f);
+        playerSpringArm.transform.rotation *= Quaternion.Euler(-moveStruct.look.y * rotationVelocity * moveStruct.deltaTime, 0f, 0f);
 
         //handle animation change
         float currentMoveSpeed = moveInput.magnitude * moveSpeed;
