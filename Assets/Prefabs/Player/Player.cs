@@ -2,45 +2,49 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.InputSystem;
 using System;
 
 public class Player : NetworkBehaviour
 {
-    [SerializeField] float MoveSpeed = 5f;
-    [SerializeField] Camera PlayerEye;
-    [SerializeField] GameObject SpringArm;
-    [SerializeField] float rotationSmoothTime = 0.01f;
+    [Header("Movement")]
+    [SerializeField] float moveSpeed = 5f;
+    [SerializeField] Camera playerEye;
+    [SerializeField] Transform playerSpringArm;
+    [SerializeField] float jumpSpeed = 10f;
+    [SerializeField] float rotationVelocity = 1f;
+    [SerializeField] GameObject MagicProjectile;
+    [SerializeField] Transform MagicProjectileSpawnPoint;
 
-
-    private float _gravity = -9.8f;
-    private CharacterController _characterController;
-    private float turnSmoothVelocity;
-    private Vector2 _moveInput;
-    private Vector2 _mouseInput;
-    PlayerInput playInput;
+    PlayerInput playerInput;
     Animator animator;
-    float cameraYaw;
-    float cameraPitch;
-    private List<MoveInfo> UnProcessedMoves = new List<MoveInfo>();
+    Vector2 moveInput;
 
-    struct MoveInfo
+    Rigidbody rb;
+
+
+    [Header("Camera Movement")]
+    Vector2 mouseInput;
+
+    struct Move
     {
-        public MoveInfo(Vector2 moveInput, Vector2 lookInput,float DeltaTime,float TimeStamp)
+        public Move(Vector2 moveInput, Vector2 lookInput, float DeltaTime, float TimeStamp)
         {
             move = moveInput;
             look = lookInput;
             deltaTime = DeltaTime;
             timeStamp = TimeStamp;
         }
-
         public Vector2 move;
         public Vector2 look;
         public float deltaTime;
         public float timeStamp;
     }
+
+    //this data type is devised to help pass data from server to client to synch up location and rotation
     struct PlayerMoveState
     {
-        public PlayerMoveState(Vector3 Position, Quaternion Rotation,float TimeStamp)
+        public PlayerMoveState(Vector3 Position, Quaternion Rotation, float TimeStamp)
         {
             position = Position;
             rotation = Rotation;
@@ -50,189 +54,197 @@ public class Player : NetworkBehaviour
         public Quaternion rotation;
         public float timeStamp;
     }
-
+    //variable hold location and rotation of the player that the server will update and inform the client
     private NetworkVariable<PlayerMoveState> netPlayerMoveState = new NetworkVariable<PlayerMoveState>();
+    private List<Move> UnProcessedMoves = new List<Move>();
 
     private void Awake()
     {
-        if(playInput == null)
+        if (playerInput == null)
         {
-            playInput = new PlayerInput();
+            playerInput = new PlayerInput();
         }
     }
+
     private void OnEnable()
     {
-        if(playInput != null)
+        if (playerInput != null)
         {
-            playInput.Enable();
+            playerInput.Enable();
         }
     }
+
     private void OnDisable()
     {
-        if(playInput != null)
+        if (playerInput != null)
         {
-            playInput.Disable();
+            playerInput.Disable();
         }
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        _characterController = GetComponent<CharacterController>();
         if (IsServer)
         {
-            
             PlayerStart playerStart = FindObjectOfType<PlayerStart>();
             transform.position = playerStart.GetRandomSpawnPos();
         }
     }
-    private void SetupPlayerInput()
-    {
-        if(IsOwner && playInput != null)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            playInput.Gameplay.Move.performed += OnMove;
-            playInput.Gameplay.Move.canceled += OnMove;
-            playInput.Gameplay.MouseMove.performed += OnMouseMove;
-            playInput.Gameplay.MouseMove.canceled += OnMouseMove;
-            playInput.Gameplay.Jump.performed += OnJumpBtnPressed;
-        }
-    }
-
-    private void OnJumpBtnPressed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
-    {
-        //Add later
-        //JumpServerRpc();
-    }
-
-    private void OnMouseMove(UnityEngine.InputSystem.InputAction.CallbackContext obj)
-    {
-        _mouseInput = obj.ReadValue<Vector2>();
-    }
-
-    private void OnMove(UnityEngine.InputSystem.InputAction.CallbackContext obj)
-    {
-        _moveInput = obj.ReadValue<Vector2>();
-    }
-
-    [ServerRpc]
-    void UpdatedMoveAndRotationServerRpc(MoveInfo moveInfo)
-    {
-        UpdateLocalCameraRotationAndMove(moveInfo);
-        netPlayerMoveState.Value = new PlayerMoveState(transform.position, transform.rotation,moveInfo.timeStamp);
-    }
-
-
-    private void UpdateLocalCameraRotationAndMove(MoveInfo moveInfo)
-    {
-        UpdateMove(moveInfo.move, moveInfo.deltaTime);
-        UpdateCameraRotation(moveInfo.look, moveInfo.deltaTime);
-    }
-
-
+    // Start is called before the first frame update
     void Start()
     {
-        SetupPlayerInput();
-        if(IsOwner && PlayerEye != null)
+        if (IsOwner)
         {
-            PlayerEye.enabled = true;
+            rb = GetComponent<Rigidbody>();
+            playerInput.Gameplay.Move.performed += OnMove;
+            playerInput.Gameplay.Move.canceled += OnMove;
+            playerInput.Gameplay.MouseMove.performed += MouseMove;
+            playerInput.Gameplay.MouseMove.canceled += MouseMove;
+            playerInput.Gameplay.Jump.performed += Jump;
+            playerInput.Gameplay.MagicAttack.performed += MagicAttack;
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = true;
+            if (playerEye != null)
+            {
+                playerEye.enabled = true;
+            }
+            netPlayerMoveState.OnValueChanged += OnPlayerMoveStateReplicated;
         }
 
         animator = GetComponent<Animator>();
-        netPlayerMoveState.OnValueChanged += OnPlayerMoveStateReplicated;
     }
 
+    private void MagicAttack(InputAction.CallbackContext obj)
+    {
+        MagicAttackEndedServerRpc();
+    }
+
+
+    [ServerRpc]
+    private void MagicAttackServerRpc()
+    {
+        if (animator != null)
+        {
+            animator.SetTrigger("Attack");
+        }
+    }
+    [ServerRpc]
+    private void MagicAttackEndedServerRpc()
+    {
+        if (animator != null)
+        {
+            animator.SetTrigger("Attack");
+        }
+    }
+
+    [ServerRpc]
+    private void MagicAttackSpawnProjectileServerRpc()
+    {
+        if(MagicProjectile != null && MagicProjectileSpawnPoint != null)
+        {
+            GameObject newMagicProjectile =  Instantiate(MagicProjectile,MagicProjectileSpawnPoint.position,MagicProjectileSpawnPoint.rotation);
+        }
+    }
     private void OnPlayerMoveStateReplicated(PlayerMoveState previousValue, PlayerMoveState newValue)
     {
         transform.position = newValue.position;
         transform.rotation = newValue.rotation;
-
-        List<MoveInfo> stillUnprocessedMoves = new List<MoveInfo>();
-        foreach(MoveInfo move in UnProcessedMoves)
+        List<Move> stillUnprocessedMoves = new List<Move>();
+        foreach (Move move in UnProcessedMoves)
         {
-            if(newValue.timeStamp < move.timeStamp)
+            if (newValue.timeStamp < move.timeStamp)
             {
                 stillUnprocessedMoves.Add(move);
             }
         }
-
         UnProcessedMoves = stillUnprocessedMoves;
-        foreach(MoveInfo move in UnProcessedMoves)
+        foreach (Move move in UnProcessedMoves)
         {
-            UpdateLocalCameraRotationAndMove(move);
+            ProcessMove(move);
         }
     }
 
+    private void Jump(InputAction.CallbackContext obj)
+    {
+        JumpServerRpc();
+    }
+    [ServerRpc]
+    void JumpServerRpc()
+    {
+        if (rb != null)
+        {
+            rb.AddForce(Vector3.up * jumpSpeed, ForceMode.Impulse);
+        }
+    }
+    private void MouseMove(InputAction.CallbackContext obj)
+    {
+        mouseInput = obj.ReadValue<Vector2>();
+    }
+
+    private void OnMove(InputAction.CallbackContext obj)
+    {
+        moveInput = obj.ReadValue<Vector2>();
+    }
+
+    // Update is called once per frame
     void Update()
     {
-        //if this character played locally, and not the server
+        //if this character is played locally and not the server
         if (IsOwner && !IsServer)
         {
-            MoveInfo currentMoveInfo = new MoveInfo(_moveInput, _mouseInput, Time.deltaTime, Time.timeSinceLevelLoad);
-            UpdatedMoveAndRotationServerRpc(currentMoveInfo);
-            UnProcessedMoves.Add(currentMoveInfo);
-
-            UpdateLocalCameraRotationAndMove(currentMoveInfo);
+            Move currentMove = new Move(moveInput, mouseInput, Time.deltaTime, Time.timeSinceLevelLoad);
+            ProcessMoveServerRpc(currentMove);
+            UnProcessedMoves.Add(currentMove);
+            ProcessMove(currentMove);
         }
-
-        //we are the host (the server with a player playing)
+        //we are host (the server with a player playing)
         if (IsOwnedByServer && IsServer)
         {
-            MoveInfo currentMoveInfo = new MoveInfo(_moveInput, _mouseInput, Time.deltaTime, Time.timeSinceLevelLoad);
-            UpdatedMoveAndRotationServerRpc(currentMoveInfo);
+            Move currentMove = new Move(moveInput, mouseInput, Time.deltaTime, Time.timeSinceLevelLoad);
+            ProcessMoveServerRpc(currentMove);
         }
-
-        //we are not the server, and we not controlled locally either
-        if(!IsOwner && !IsServer)
+        //not server or locally controlled
+        if (!IsOwner && !IsServer)
         {
             transform.position = netPlayerMoveState.Value.position;
             transform.rotation = netPlayerMoveState.Value.rotation;
         }
-
     }
 
-
-
-    private void UpdateMove(Vector2 input, float deltaTime)
+    //we tell server to do it through this function
+    [ServerRpc]
+    void ProcessMoveServerRpc(Move moveStruct)
     {
-        Vector3 playerDir = new Vector3(input.x, 0f, input.y).normalized;
+        ProcessMove(moveStruct);
+        netPlayerMoveState.Value = new PlayerMoveState(transform.position, transform.rotation, moveStruct.timeStamp);
+    }
 
-        if (playerDir.magnitude >= 0.1f)
-        {
-            float targetAngle = Mathf.Atan2(playerDir.x, playerDir.z) * Mathf.Rad2Deg + PlayerEye.transform.eulerAngles.y;
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, rotationSmoothTime);
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
-            SpringArm.transform.rotation *= Quaternion.Inverse(transform.rotation);
+    //goal is to do it locally here
+    void ProcessMove(Move moveStruct)
+    {
+        transform.position += (GetControlRight() * moveStruct.move.x + GetControlForward() * moveStruct.move.y).normalized * moveStruct.deltaTime * moveSpeed;
+        //look left and right
+        transform.Rotate(Vector3.up, moveStruct.look.x + rotationVelocity * moveStruct.deltaTime);
+        //look up and down
+        playerSpringArm.transform.rotation *= Quaternion.Euler(-moveStruct.look.y * rotationVelocity, 0f, 0f);
 
-            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-
-            float velocityY = 0;
-            if (!_characterController.isGrounded)
-            {
-                velocityY = _gravity * deltaTime;
-            }
-            _characterController.Move(moveDir.normalized * MoveSpeed * deltaTime + new Vector3(0, velocityY, 0));
-        }
-
-        float currentMoveSpeed = input.magnitude * MoveSpeed;
+        //handle animation change
+        float currentMoveSpeed = moveInput.magnitude * moveSpeed;
         if (animator != null)
         {
             animator.SetFloat("speed", currentMoveSpeed);
         }
-        else
-        {
-            Debug.Log("Animator is not playing!");
-        }
     }
 
-    private void UpdateCameraRotation(Vector2 look, float deltaTime)
-    {
-        float deltaTimeMultiplier = 10 * deltaTime;
-        cameraYaw += look.x * deltaTimeMultiplier;
-        cameraPitch += -look.y * deltaTimeMultiplier;
 
-        
-      
-        SpringArm.transform.rotation = Quaternion.Euler(cameraPitch, cameraYaw, 0.0f);
+    Vector3 GetControlRight()
+    {
+        return playerEye.transform.right;
+    }
+
+    Vector3 GetControlForward()
+    {
+        return Vector3.Cross(GetControlRight(), Vector3.up);
     }
 }
