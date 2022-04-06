@@ -104,7 +104,7 @@ public class Player : NetworkBehaviour
             playerInput.Gameplay.MouseMove.canceled += MouseMove;
             playerInput.Gameplay.Jump.performed += Jump;
             playerInput.Gameplay.MagicAttack.performed += MagicAttack;
-            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             if (playerEye != null)
             {
@@ -118,7 +118,7 @@ public class Player : NetworkBehaviour
 
     private void MagicAttack(InputAction.CallbackContext obj)
     {
-        MagicAttackAnimationTrigger();
+        //MagicAttackAnimationTrigger();
     }
 
     private void MagicAttackAnimationTrigger()
